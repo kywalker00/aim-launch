@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🎲 Rerolling picks…</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: Lexend, system-ui, sans-serif;
+         background: radial-gradient(circle at 30% 20%, #3b0764, #111827 60%); color: #f9fafb; }
+  .card { text-align: center; padding: 40px 48px; border-radius: 20px; background: rgba(17,24,39,.75);
+          border: 1px solid #374151; max-width: 440px; }
+  h1 { font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: #c084fc; margin: 0 0 12px; }
+  .big { font-size: 48px; margin: 0 0 8px; }
+  .msg { font-size: 22px; font-weight: 700; margin: 0 0 12px; }
+  p.hint { color: #9ca3af; font-size: 13px; margin: 8px 0 0; line-height: 1.5; }
+  .spin { display: inline-block; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🎯 Aim Grades · reroll</h1>
+  <p class="big"><span id="icon" class="spin">🎲</span></p>
+  <p class="msg" id="msg">Rolling new picks…</p>
+  <p class="hint" id="hint">This takes about 10–20 seconds.</p>
+</div>
+<script>
+  // Asks the Aim Grades script for new practice picks. credentials:'omit' sends no Google login,
+  // so it works the same whether the viewer is signed into zero, one or several Google accounts.
+  var EXEC = 'https://script.google.com/macros/s/AKfycbxcSz2yP7g3B1hMw5URCgvG_t_uw2pZvdx-W7RC9XTQSxcbmgF1Vwq587OxJwmqonVCwA/exec';
+  var id = (new URLSearchParams(location.search).get('id') || '').replace(/\D/g, '');
+  var icon = document.getElementById('icon'), msg = document.getElementById('msg'), hint = document.getElementById('hint');
+  function done(text, sub, emoji) {
+    icon.classList.remove('spin'); icon.textContent = emoji; msg.textContent = text; hint.textContent = sub;
+    document.title = emoji + ' ' + text;
+  }
+  if (!id) {
+    done('Missing player', 'Use the Reroll link on a player tab in the sheet.', '⚠️');
+  } else {
+    fetch(EXEC + '?reroll=' + id + '&api=1', { credentials: 'omit', redirect: 'follow' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j.ok) done('New picks are ready', 'Switch back to the sheet. You can close this tab.', '✅');
+        else done(j.msg || 'Something went wrong', 'Try again in a minute.', '⚠️');
+      })
+      .catch(function () {
+        // If the reply can't be read, still send the request so the reroll happens.
+        fetch(EXEC + '?reroll=' + id, { mode: 'no-cors', credentials: 'omit' }).finally(function () {
+          done('Reroll sent', 'Give it ~20 seconds, then check the sheet.', '🎲');
+        });
+      });
+  }
+</script>
+</body>
+</html>
